@@ -87,4 +87,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - FFmpeg for video decoding
 - Cairo for graphics rendering
-- X11/Xorg team 
+- X11/Xorg team # aniwall
