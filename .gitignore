@@ -1,0 +1,18 @@
+# Build files
+build/
+*.o
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+
+# System files
+.DS_Store
+.directory
+
+# Log files
+*.log
+
+# Config files
+.local/ 

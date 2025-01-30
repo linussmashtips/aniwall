@@ -1,0 +1,161 @@
+#!/bin/bash
+
+VERSION="1.0.0"
+CONFIG_DIR="$HOME/.local/share/aniwall"
+CURRENT_VIDEO="$CONFIG_DIR/current_video"
+GITHUB_REPO="https://raw.githubusercontent.com/yourusername/aniwall/main"
+INSTALL_DIR="/usr/local/share/aniwall"
+
+usage() {
+    echo "Animated Wallpaper Manager"
+    echo "Usage: aniwall COMMAND [OPTIONS]"
+    echo
+    echo "Commands:"
+    echo "  set <video>     Set video as wallpaper"
+    echo "  stop            Stop current wallpaper"
+    echo "  status          Check wallpaper status"
+    echo "  enable          Enable autostart on boot"
+    echo "  disable         Disable autostart on boot"
+    echo "  update          Check for and install updates"
+    echo
+    echo "Options:"
+    echo "  --stretch       Stretch video to fill screen"
+    echo "  --loop         Loop video (default)"
+    echo "  --no-loop      Play video once"
+}
+
+ensure_dirs() {
+    mkdir -p "$CONFIG_DIR"
+}
+
+set_wallpaper() {
+    local video="$1"
+    shift
+    local options="$@"
+
+    if [ ! -f "$video" ]; then
+        echo "Error: Video file not found: $video"
+        exit 1
+    fi
+
+    ensure_dirs
+    cp "$video" "$CONFIG_DIR/video.mp4"
+    echo "$options" > "$CONFIG_DIR/options"
+    
+    # Kill any existing instance
+    pkill -f aniwall-daemon
+
+    # Start new instance
+    nohup aniwall-daemon --daemon >/dev/null 2>&1 &
+    
+    # Wait a moment to check if it started
+    sleep 2
+    if ! pgrep -f aniwall-daemon >/dev/null; then
+        echo "Failed to start wallpaper daemon"
+        exit 1
+    fi
+    echo "Wallpaper set successfully"
+}
+
+stop_wallpaper() {
+    pkill -f aniwall-daemon
+    echo "Wallpaper stopped"
+}
+
+check_status() {
+    if pgrep -f aniwall-daemon >/dev/null; then
+        echo "Wallpaper daemon is running"
+    else
+        echo "Wallpaper daemon is not running"
+    fi
+}
+
+check_update() {
+    echo "Checking for updates..."
+    
+    # Get current version
+    local current_version="$VERSION"
+    
+    # Get latest version from GitHub
+    local latest_version
+    latest_version=$(curl -s "$GITHUB_REPO/version")
+    
+    if [ "$current_version" != "$latest_version" ]; then
+        echo "Update available: $current_version -> $latest_version"
+        echo "Installing update..."
+        
+        # Need sudo for system file updates
+        if [ "$EUID" -ne 0 ]; then 
+            echo "Please run update with sudo"
+            exit 1
+        fi
+        
+        # Download and install updated files
+        curl -s "$GITHUB_REPO/aniwall" -o "/usr/local/bin/aniwall"
+        curl -s "$GITHUB_REPO/aniwall-daemon" -o "/usr/local/bin/aniwall-daemon"
+        curl -s "$GITHUB_REPO/aniwall.service" -o "/etc/systemd/user/aniwall.service"
+        
+        # Set permissions
+        chmod 755 /usr/local/bin/aniwall
+        chmod 755 /usr/local/bin/aniwall-daemon
+        chmod 644 /etc/systemd/user/aniwall.service
+        
+        # Reload systemd and restart service if running
+        systemctl --user daemon-reload
+        if systemctl --user is-active aniwall >/dev/null; then
+            systemctl --user restart aniwall
+        fi
+        
+        echo "Update completed successfully!"
+    else
+        echo "Already running latest version ($current_version)"
+    fi
+}
+
+enable_autostart() {
+    systemctl --user enable aniwall
+    systemctl --user start aniwall
+    echo "Autostart enabled"
+}
+
+disable_autostart() {
+    systemctl --user disable aniwall
+    systemctl --user stop aniwall
+    echo "Autostart disabled"
+}
+
+# Main command processing
+case "$1" in
+    set)
+        shift
+        if [ -z "$1" ]; then
+            usage
+            exit 1
+        fi
+        video="$1"
+        shift
+        set_wallpaper "$video" "$@"
+        ;;
+    stop)
+        stop_wallpaper
+        ;;
+    status)
+        check_status
+        ;;
+    enable)
+        enable_autostart
+        ;;
+    disable)
+        disable_autostart
+        ;;
+    update)
+        check_update
+        ;;
+    --help|-h)
+        usage
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac 

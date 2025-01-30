@@ -1,0 +1,12 @@
+[0;1;31m×[0m aniwall.service - Animated Wallpaper Service
+     Loaded: loaded (/home/webgraffiti/.config/systemd/user/aniwall.service; enabled; vendor preset: enabled)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Wed 2025-01-29 05:07:50 EET; 3s ago
+    Process: 534246 ExecStart=/usr/local/bin/aniwall-daemon --daemon [0;1;31m(code=exited, status=216/GROUP)[0m
+   Main PID: 534246 (code=exited, status=216/GROUP)
+        CPU: 0
+
+ian 29 05:07:50 webgraffiti-MS-7C95 systemd[4126]: aniwall.service: Scheduled restart job, restart counter is at 3.
+ian 29 05:07:50 webgraffiti-MS-7C95 systemd[4126]: Stopped Animated Wallpaper Service.
+ian 29 05:07:50 webgraffiti-MS-7C95 systemd[4126]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185maniwall.service: Start request repeated too quickly.[0m
+ian 29 05:07:50 webgraffiti-MS-7C95 systemd[4126]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185maniwall.service: Failed with result 'exit-code'.[0m
+ian 29 05:07:50 webgraffiti-MS-7C95 systemd[4126]: [0;1;31m[0;1;39m[0;1;31mFailed to start Animated Wallpaper Service.[0m
